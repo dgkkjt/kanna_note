@@ -30,7 +30,7 @@ from .draw.util import merge_pic
 
 from .table import UnitSkillData
 
-from .base import GameSetting
+from .base import FilePath, GameSetting
 
 from .model import (
     BirthdayData,
@@ -50,6 +50,7 @@ from .util import (
     convert2simplified,
     is_coming_soon,
     is_in_progress,
+    is_text_chinese,
     pic2cqcode,
 )
 from .draw.draw_fullcard import draw_fullcard
@@ -344,7 +345,19 @@ async def get_enemy_id(
 async def get_enemy_skill(
     id_: int, type_: str = None, data: PCRDatabase = None, enemy_id: int = None
 ):
-    unit_info = await data.get_enemy_info_query(id_)
+    # TODO: main_parameter 有不同种类，目前他们的字段是大部分一样的，可以用继承简化，同时type hint有点问题
+    if not (main_parameter := await data.get_enemy_parameter_query(enemy_id)):
+        main_parameter = await data.get_talent_quest_enemy_parameter_query(enemy_id)
+    if not main_parameter:
+        main_parameter = await data.get_event_enemy_parameter_query(enemy_id)
+    if not main_parameter:
+        main_parameter = await data.get_shiori_enemy_parameter_query(enemy_id)
+    if not main_parameter:
+        main_parameter = await data.get_sre_enemy_parameter_query(enemy_id)
+    if not main_parameter:
+        main_parameter = await data.get_tower_enemy_parameter_query(enemy_id)
+
+    unit_info = await data.get_enemy_info_query(main_parameter.unit_id)
     attack_pattern = await data.get_attack_pattern(
         unit_info.cutin_star6 or unit_info.unit_id
     )
@@ -369,7 +382,7 @@ async def get_enemy_skill(
         skill_action_dict = {
             k: [convert2simplified(q) for q in v] for k, v in skill_action_dict.items()
         }
-    main_parameter = await data.get_enemy_parameter_query(enemy_id)
+
     skill_level_dict = get_skill_level(unit_skills, main_parameter)
 
     sub = await data.get_enemy_m_parts_query(enemy_id)
@@ -392,7 +405,15 @@ async def get_enemy_skill(
         merge_pic(
             [
                 await draw_enemy_icon(unit_info.unit_id, unit_info.unit_name, 500),
-                await draw_enemy_introduce(main_parameter, sub_parameters),
+                await draw_enemy_introduce(
+                    main_parameter,
+                    sub_parameters,
+                    (
+                        FilePath.font_ms_bold.value
+                        if type_ != "jp"
+                        else FilePath.font_jp.value
+                    ),
+                ),
                 await draw_pattern(attack_pattern, unit_skills, skill_data_dict),
                 await draw_all_skill(
                     skill_dict,

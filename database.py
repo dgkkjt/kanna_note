@@ -25,6 +25,7 @@ from .table import (
     DailyMissionData,
     EnemyMParts,
     EnemyParameter,
+    EventEnemyParameter,
     EventStoryData,
     EventStoryDetail,
     GachaData,
@@ -35,11 +36,15 @@ from .table import (
     MissionRewardData,
     RedeemUnit,
     SecretDungeonSchedule,
+    ShioriEnemyParameter,
     ShioriEventList,
     SkillAction,
     SkillData,
     SpSkillLabelData,
+    SreEnemyParameter,
+    TalentQuestEnemyParameter,
     TdfSchedule,
+    TowerEnemyParameter,
     TowerSchedule,
     UniqueEquipmentEnhanceData,
     UnitAttackPattern,
@@ -252,6 +257,55 @@ class PCRDatabase:
     ) -> EnemyParameter:
         result = await session.execute(
             select(EnemyParameter).where(EnemyParameter.enemy_id == enemy_id)
+        )
+        return result.scalars().first()
+
+    @session
+    async def get_talent_quest_enemy_parameter_query(
+        self, session: AsyncSession, enemy_id: int
+    ) -> TalentQuestEnemyParameter:
+        result = await session.execute(
+            select(TalentQuestEnemyParameter).where(
+                TalentQuestEnemyParameter.enemy_id == enemy_id
+            )
+        )
+        return result.scalars().first()
+
+    @session
+    async def get_event_enemy_parameter_query(
+        self, session: AsyncSession, enemy_id: int
+    ) -> EventEnemyParameter:
+        result = await session.execute(
+            select(EventEnemyParameter).where(EventEnemyParameter.enemy_id == enemy_id)
+        )
+        return result.scalars().first()
+
+    @session
+    async def get_shiori_enemy_parameter_query(
+        self, session: AsyncSession, enemy_id: int
+    ) -> ShioriEnemyParameter:
+        result = await session.execute(
+            select(ShioriEnemyParameter).where(
+                ShioriEnemyParameter.enemy_id == enemy_id
+            )
+        )
+        return result.scalars().first()
+
+    @session
+    async def get_sre_enemy_parameter_query(
+        self, session: AsyncSession, enemy_id: int
+    ) -> SreEnemyParameter:
+        result = await session.execute(
+            select(SreEnemyParameter).where(SreEnemyParameter.enemy_id == enemy_id)
+        )
+        return result.scalars().first()
+
+    @session
+    async def get_tower_enemy_parameter_query(
+        self, session: AsyncSession, enemy_id: int
+    ) -> TowerEnemyParameter:
+        result = await session.execute(
+            select(TowerEnemyParameter).where(TowerEnemyParameter.enemy_id == enemy_id)
         )
         return result.scalars().first()
 

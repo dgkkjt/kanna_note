@@ -47,7 +47,7 @@ def chara_id2name(id_):
 
 def is_text_chinese(text: str) -> bool:
     """判断字符串是否是中文"""
-    return bool(re.search(r"[\u4e00-\u9fff]*", text))
+    return bool(re.search(r"[\u4e00-\u9fff]*", text)) if text else True
 
 
 def convert2gameid(id_):

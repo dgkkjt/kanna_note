@@ -166,7 +166,8 @@ async def enemy_skill(bot, ev: CQEvent):
     elif "日" in ev.prefix:
         type_ = "jp"
     if "#" in args:
-        _id = int(args[1:])
+        enemy_id = int(args[1:])
+        _id = enemy_id
     else:
         matches = re.match(r"(\d+)([a-zA-Z])(\d+)", args)
         if not matches:

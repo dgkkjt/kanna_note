@@ -17,6 +17,7 @@ async def update_pcr_database():
                 f.write(decompressor.process(chunk))
 
         os.replace(FilePath.temp_db.value, path)  # 替换文件
+    os.remove(FilePath.temp_db.value)  # 删除临时文件
 
 
 def generate_pcr_fullcard(id_, star):
@@ -91,7 +92,7 @@ async def get_enemy_icon(enemy_id):
         return save_path
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
-            raise ValueError(f"暂无id为{enemy_id}的敌人图标") from e
+            return FilePath.icon.value / "kailu.png"  # 默认图标
 
 
 async def get_teaser_icon(teaser_id, type_):

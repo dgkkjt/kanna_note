@@ -91,16 +91,12 @@ def draw_full_parameter_info(
 async def draw_enemy_introduce(
     main_parameter: EnemyParameter,
     sub_parameters: List[EnemyParameter],
+    text_font_path: str = FilePath.font_ms_bold.value,
 ):
     length = 10
     length += 90 + len(sub_parameters) * (30 * 7 + 55) if sub_parameters else 30 * 7
     base = Image.new("RGBA", (WIDTH, length), "#fef8f8")
     draw = ImageDraw.Draw(base)
-    text_font_path = (
-        FilePath.font_ms_bold.value
-        if is_text_chinese(main_parameter.name)
-        else FilePath.font_jp.value
-    )
 
     font_cn = ImageFont.truetype(FilePath.font_ms_bold.value, 15)
 
