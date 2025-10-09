@@ -1003,7 +1003,6 @@ class PCRDatabase:
                 CampaignSchedule.campaign_category.in_(
                     [31, 41, 32, 42, 39, 49, 34, 37, 38, 45]
                 ),
-                CampaignSchedule.id < 5000,
             )
             .group_by(
                 CampaignSchedule.start_time,
