@@ -4,7 +4,13 @@ from typing import List
 
 from .table import EnemyParameter, SkillData, UnitSkillData
 from .model import ShowCoe, SkillActionData, SkillActionText
-from .base import SKILL_DESCRIPTIONS, SkillActionType, StringResources
+from .base import (
+    SKILL_DESCRIPTIONS,
+    BuffType,
+    DotType,
+    SkillActionType,
+    StringResources,
+)
 
 
 def get_skill_level(skill_data: UnitSkillData, parameter: EnemyParameter) -> dict:
@@ -307,92 +313,75 @@ def init_other_limit():
     # self.is_other_limit_action = True
 
 
-def get_aura(v, value_text):
-    action = StringResources.get(
-        "skill_hp_max"
-        if v == 1
-        else {
-            1: "attr_atk",
-            2: "attr_def",
-            3: "attr_magic_str",
-            4: "attr_magic_def",
-            5: "attr_dodge",
-            6: "attr_physical_critical",
-            7: "attr_magic_critical",
-            8: "attr_energy_recovery_rate",
-            9: "attr_life_steal",
-            10: "skill_speed",
-            11: "skill_physical_critical_damage",
-            12: "skill_magic_critical_damage",
-            13: "attr_accuracy",
-            14: "skill_critical_damage_take",
-            16: "skill_physical_damage_take",
-            17: "skill_magic_damage_take",
-            18: "skill_physical_damage",
-            19: "skill_magic_damage",
-        }.get(v % 1000 // 10, "unknown")
+def get_buff_text(value, value_text="", action_value_7=0):
+    type_value = value % 1000 // 10
+    buff_text = (
+        StringResources.get("skill_hp_max")
+        if value == 1
+        else BuffType.get(type_value).name
     )
-
-    if v // 10 in [14, 16, 17]:
-        type_ = (
-            StringResources.get("skill_reduce" if v % 10 == 0 else "skill_increase")
-            + " "
-            + value_text
+    change_desc = (
+        StringResources.get("skill_reduce" if value % 10 == 0 else "skill_increase")
+        if type_value
+        in {
+            BuffType.CRITICAL_DAMAGE_TAKE.value,
+            BuffType.DAMAGE_TAKE.value,
+            BuffType.PHYSICAL_DAMAGE_TAKE.value,
+            BuffType.MAGIC_DAMAGE_TAKE.value,
+        }
+        else StringResources.get(
+            "skill_increase" if value % 10 == 0 else "skill_reduce"
         )
-    else:
-        type_ = (
-            StringResources.get("skill_increase" if v % 10 == 0 else "skill_reduce")
-            + " "
-            + value_text
-        )
+    )
+    if value_text:
+        change_desc += f" {value_text}"
 
     # 固定buff，不受其他效果影响
-    if v > 1000:
-        type_ += StringResources.get("skill_fixed")
+    if value // 1000 == 1:
+        change_desc += StringResources.get("skill_fixed")
+    # 不可驱散
+    if action_value_7 == 2:
+        change_desc += StringResources.get("skill_cannot_dispel")
 
-    return action + type_
+    return buff_text + change_desc
 
 
 def get_status(value, action_value_3):
-    return StringResources.get(
-        {
-            100: "skill_status_100",
-            101: "skill_status_101",
-            200: "skill_status_200",
-            300: "skill_status_300",
-            400: "skill_status_400",
-            500: "skill_status_500",
-            501: "skill_status_501",
-            502: "skill_status_502",
-            503: "skill_status_503",
-            504: "skill_status_504",
-            511: "skill_status_511",
-            512: "skill_status_512",
-            710: "skill_status_710",
-            900: "skill_status_900",
-            1400: "skill_status_1400",
-            1600: "skill_status_1600",
-            1601: "skill_status_1601",
-            1700: {21: "skill_status_1700_21", 41: "skill_status_1700_41"}.get(
-                action_value_3, "unknown"
-            ),
-            721: "skill_status_721",
-            6107: "skill_status_6107",
-            1513: "skill_ailment_13",
-            1800: "skill_status_1800",
-            1900: "skill_status_1900",
-            3137: "skill_status_3137",
-            3162: "skill_status_3162",
-            3175: "skill_status_3175",
-            3207: "skill_status_3207",
-            6160: "skill_status_6160",
-            4001: "skill_target_fire",
-            4002: "skill_target_waterAdd commentMore actions",
-            4003: "skill_target_wind",
-            4004: "skill_target_light",
-            4005: "skill_target_dark",
-        }.get(value, "unknown")
-    )
+    return {
+        100: StringResources.get("skill_status_100"),
+        101: StringResources.get("skill_status_101"),
+        200: StringResources.get("skill_status_200"),
+        300: StringResources.get("skill_status_300"),
+        400: StringResources.get("skill_status_400"),
+        500: StringResources.get("skill_status_500"),
+        501: StringResources.get("skill_status_501"),
+        502: StringResources.get("skill_status_502"),
+        503: StringResources.get("skill_status_503"),
+        504: StringResources.get("skill_status_504"),
+        511: StringResources.get("skill_status_511"),
+        512: StringResources.get("skill_status_512"),
+        710: StringResources.get("skill_status_710"),
+        900: StringResources.get("skill_status_900"),
+        1400: StringResources.get("skill_status_1400"),
+        1600: StringResources.get("skill_status_1600"),
+        1601: StringResources.get("skill_status_1601"),
+        1700: StringResources.get("skill_status_1700", get_buff_text(action_value_3)),
+        721: StringResources.get("skill_status_721"),
+        6107: StringResources.get("skill_status_6107"),
+        1513: StringResources.get("skill_ailment_13"),
+        1800: StringResources.get("skill_status_1800"),
+        1900: StringResources.get("skill_status_1900"),
+        3137: StringResources.get("skill_status_3137"),
+        3162: StringResources.get("skill_status_3162"),
+        3175: StringResources.get("skill_status_3175"),
+        3207: StringResources.get("skill_status_3207"),
+        6160: StringResources.get("skill_status_6160"),
+        4001: StringResources.get("skill_target_fire"),
+        4002: StringResources.get("skill_target_water"),
+        4003: StringResources.get("skill_target_wind"),
+        4004: StringResources.get("skill_target_light"),
+        4005: StringResources.get("skill_target_dark"),
+    }.get(value, StringResources.get("unknown"))
 
 
 def get_skill_depend_dict(skill_data: SkillData):
@@ -645,15 +634,7 @@ class ActionHandler:
 
     # 90：EX被动
     def ex(self):
-        type_ = {
-            1: StringResources.get("attr_hp"),
-            2: StringResources.get("attr_atk"),
-            3: StringResources.get("attr_def"),
-            4: StringResources.get("attr_magic_str"),
-            5: StringResources.get("attr_magic_def"),
-            6: StringResources.get("attr_physical_critical"),
-            7: StringResources.get("attr_magic_critical"),
-        }.get(self.action.action_detail_1, "UNKNOWN")
+        type_ = BuffType.get(self.action.action_detail_1).name
 
         value = self.get_value_text(
             2, self.action.action_value_2, self.action.action_value_3
@@ -855,7 +836,9 @@ class ActionHandler:
         )
 
     def change_width(self):
-        return StringResources.get("skill_action_type_desc_52")
+        return StringResources.get(
+            "skill_action_type_desc_52", self.action.action_value_1
+        )
 
     # 50：持续动作
     def channel(self):
@@ -868,7 +851,9 @@ class ActionHandler:
             self.action.action_value_3,
             percent=self.get_percent(),
         )
-        aura = get_aura(self.action.action_detail_1, value)
+        aura = get_buff_text(
+            self.action.action_detail_1, value, self.action.action_value_7
+        )
         return StringResources.get(
             "skill_action_type_desc_50",
             self.get_target(),
@@ -981,7 +966,9 @@ class ActionHandler:
         time = self.get_time_text(
             3, self.action.action_value_3, self.action.action_value_4
         )
-        aura = get_aura(self.action.action_detail_1, value)
+        aura = get_buff_text(
+            self.action.action_detail_1, value, self.action.action_value_7
+        )
         return self.get_target() + StringResources.get(
             "skill_action_type_desc_field", self.action.action_value_5, aura, time
         )
@@ -1942,11 +1929,13 @@ class ActionHandler:
         value = self.get_value_text(
             1, self.action.action_value_1, self.action.action_value_2
         )
-        self.tag = StringResources.get(
-            "skill_action_tp_recovery"
-            if self.action.action_detail_1 in [1, 4]
-            else "skill_action_tp_reduce"
-        )
+        self.tag = ""
+        if self.action.action_detail_1 == 1:
+            self.tag = StringResources.get("skill_action_tp_recovery")
+        elif self.action.action_detail_1 == 4:
+            self.tag = StringResources.get("skill_action_tp_recovery_fix")
+        elif self.action.action_detail_1 in [2, 3]:
+            self.tag = StringResources.get("unknown")
         return f"{self.get_target()}{self.tag} {value}"
 
     # 92：改变 TP 获取倍率
@@ -2084,7 +2073,9 @@ class ActionHandler:
             self.action.action_value_3,
             percent=self.get_percent(),
         )
-        aura = get_aura(self.action.action_detail_1, value)
+        aura = get_buff_text(
+            self.action.action_detail_1, value, self.action.action_value_7
+        )
         time = self.get_time_text(
             4, self.action.action_value_4, self.action.action_value_5
         )
@@ -2097,19 +2088,7 @@ class ActionHandler:
             return f"{self.get_target()}{aura}{time}"
 
     def dot(self):
-        self.tag = StringResources.get(
-            {
-                0: "skill_dot_0",
-                1: "skill_dot_1_7",
-                7: "skill_dot_1_7",
-                2: "skill_dot_2",
-                3: "skill_dot_3_8",
-                8: "skill_dot_3_8",
-                4: "skill_dot_4",
-                5: "skill_dot_5",
-                11: "skill_dot_11",
-            }.get(self.action.action_detail_1, "unknown")
-        )
+        self.tag = StringResources.get(DotType.get(self.action.action_detail_1).value)
 
         value = self.get_value_text(
             1,
@@ -2137,14 +2116,32 @@ class ActionHandler:
 
     # 110：持续伤害易伤
     def dot_up(self):
-        value = self.get_value_text(
-            1, self.action.action_value_1, self.action.action_value_2
+
+        effect_type_list = (
+            []
+            if self.action.action_value_3 == -1
+            else [
+                self.action.action_value_3,
+                self.action.action_value_4,
+                self.action.action_value_5,
+                self.action.action_value_6,
+            ]
         )
+        if effec_name := "、".join(
+            [
+                StringResources.get(DotType.get(value).value)
+                for value in effect_type_list
+                if value != -1
+            ]
+        ):
+            effec_name = f"『{effec_name}』"
+        multiple = 1 + self.action.action_value_1 / 100
+
         limit = StringResources.get(
             "skill_action_damage_limit_int", self.action.action_value_7
         )
         return StringResources.get(
-            "skill_action_type_desc_110", self.get_target(), value, limit
+            "skill_action_type_desc_110", self.get_target(), effec_name, multiple, limit
         )
 
     # 79：行动时，造成伤害
@@ -2578,86 +2575,94 @@ class ActionHandler:
         return depend + target_type + range_text + self.get_target_count()
 
     def get_target_type(self) -> str:
+        targetArea = ""
+        if self.action.target_area in [7, 8, 9]:
+            targetArea = StringResources.get("skill_area_exclude_summon")
+        elif self.action.target_area in [4, 5, 6]:
+            targetArea = StringResources.get("skill_area_include_flight")
+        target = ""
         if self.action.target_type in [0, 1, 3, 40, 41]:
-            return StringResources.get("none")
+            target = StringResources.get("none")
         elif self.action.target_type in [2, 8]:
-            return StringResources.get("skill_target_2_8")
+            target = StringResources.get("skill_target_2_8")
         elif self.action.target_type == 4:
-            return StringResources.get("skill_target_4")
+            target = StringResources.get("skill_target_4")
         elif self.action.target_type in [5, 25]:
-            return StringResources.get("skill_target_5_25")
+            target = StringResources.get("skill_target_5_25")
         elif self.action.target_type in [6, 26]:
-            return StringResources.get("skill_target_6_26")
+            target = StringResources.get("skill_target_6_26")
         elif self.action.target_type == 7:
-            return StringResources.get("skill_target_7")
+            target = StringResources.get("skill_target_7")
         elif self.action.target_type == 9:
-            return StringResources.get("skill_target_9")
+            target = StringResources.get("skill_target_9")
         elif self.action.target_type == 10:
-            return StringResources.get("skill_target_10")
+            target = StringResources.get("skill_target_10")
         elif self.action.target_type == 11:
-            return StringResources.get("skill_target_11")
+            target = StringResources.get("skill_target_11")
         elif self.action.target_type in [12, 27, 37]:
-            return StringResources.get("skill_target_12_27_37")
+            target = StringResources.get("skill_target_12_27_37")
         elif self.action.target_type in [13, 19, 28]:
-            return StringResources.get("skill_target_13_19_28")
+            target = StringResources.get("skill_target_13_19_28")
         elif self.action.target_type in [14, 29]:
-            return StringResources.get("skill_target_14_29")
+            target = StringResources.get("skill_target_14_29")
         elif self.action.target_type in [15, 30]:
-            return StringResources.get("skill_target_15_30")
+            target = StringResources.get("skill_target_15_30")
         elif self.action.target_type in [16, 31]:
-            return StringResources.get("skill_target_16_31")
+            target = StringResources.get("skill_target_16_31")
         elif self.action.target_type in [17, 32]:
-            return StringResources.get("skill_target_17_32")
+            target = StringResources.get("skill_target_17_32")
         elif self.action.target_type == 18:
-            return StringResources.get("skill_target_18")
+            target = StringResources.get("skill_target_18")
         elif self.action.target_type == 20:
-            return StringResources.get("skill_target_20")
+            target = StringResources.get("skill_target_20")
         elif self.action.target_type == 21:
-            return StringResources.get("skill_target_21")
+            target = StringResources.get("skill_target_21")
         elif self.action.target_type == 22:
-            return StringResources.get("skill_target_22")
+            target = StringResources.get("skill_target_22")
         elif self.action.target_type == 23:
-            return StringResources.get("skill_target_23")
+            target = StringResources.get("skill_target_23")
         elif self.action.target_type == 24:
-            return StringResources.get("skill_target_24")
+            target = StringResources.get("skill_target_24")
         elif self.action.target_type == 33:
-            return StringResources.get("skill_target_33")
+            target = StringResources.get("skill_target_33")
         elif self.action.target_type == 34:
-            return StringResources.get("skill_target_34")
+            target = StringResources.get("skill_target_34")
         elif self.action.target_type == 35:
-            return StringResources.get("skill_target_35")
+            target = StringResources.get("skill_target_35")
         elif self.action.target_type == 36:
-            return StringResources.get("skill_target_36")
+            target = StringResources.get("skill_target_36")
         elif self.action.target_type == 38:
-            return StringResources.get("skill_target_38")
+            target = StringResources.get("skill_target_38")
         elif self.action.target_type == 39:
-            return StringResources.get("skill_target_39")
+            target = StringResources.get("skill_target_39")
         elif self.action.target_type == 42:
-            return StringResources.get("skill_target_42")
+            target = StringResources.get("skill_target_42")
         elif self.action.target_type == 43:
-            return StringResources.get("skill_target_43")
+            target = StringResources.get("skill_target_43")
         elif self.action.target_type == 44:
-            return StringResources.get("skill_target_44")
+            target = StringResources.get("skill_target_44")
         elif self.action.target_type == 45:
-            return StringResources.get("skill_target_45")
+            target = StringResources.get("skill_target_45")
         elif self.action.target_type == 46:
-            return StringResources.get("skill_target_46")
+            target = StringResources.get("skill_target_46")
         elif self.action.target_type == 50:
-            return StringResources.get("skill_target_50")
+            target = StringResources.get("skill_target_50")
         elif 13195 <= self.action.target_type <= 14000:
-            return StringResources.get("skill_target_13xxx")
+            target = StringResources.get("skill_target_13xxx")
         elif self.action.target_type in [14001, 15001]:
-            return StringResources.get("skill_target_fire")
+            target = StringResources.get("skill_target_fire")
         elif self.action.target_type in [14002, 15002]:
-            return StringResources.get("skill_target_water")
+            target = StringResources.get("skill_target_water")
         elif self.action.target_type in [14003, 15003]:
-            return StringResources.get("skill_target_wind")
+            target = StringResources.get("skill_target_wind")
         elif self.action.target_type in [14004, 15004]:
-            return StringResources.get("skill_target_light")
+            target = StringResources.get("skill_target_light")
         elif self.action.target_type in [15005, 14005]:
-            return StringResources.get("skill_target_dark")
+            target = StringResources.get("skill_target_dark")
         else:
-            return StringResources.get("unknown")
+            target = StringResources.get("unknown")
+
+        return target + targetArea if target else targetArea
 
     def get_time_text(self, index, v1, v2=0.0, hide_index=False):
         return StringResources.get(
@@ -2673,22 +2678,35 @@ class ActionHandler:
             if self.action.action_value_1 == 2 or (
                 self.action.action_detail_1 // 10
             ) in {
-                11,
-                12,
-                14,
-                16,
-                17,
-                18,
-                19,
+                BuffType.PHYSICAL_CRITICAL_DAMAGE.value,
+                BuffType.MAGIC_CRITICAL_DAMAGE.value,
+                BuffType.CRITICAL_DAMAGE_TAKE.value,
+                BuffType.DAMAGE_TAKE.value,
+                BuffType.PHYSICAL_DAMAGE_TAKE.value,
+                BuffType.MAGIC_DAMAGE_TAKE.value,
+                BuffType.PHYSICAL_DAMAGE.value,
+                BuffType.MAGIC_DAMAGE.value,
             }:
                 return "%"
             else:
                 return ""
-        elif self.action.action_type in [
-            SkillActionType.HEAL_FIELD.value,
-            SkillActionType.AURA_FIELD.value,
-        ]:
-            return "%" if self.action.action_detail_2 == 2 else ""
+        elif self.action.action_type == SkillActionType.AURA_FIELD.value:
+            return (
+                "%"
+                if self.action.action_detail_2 == 2
+                or (self.action.action_detail_1 // 10)
+                in {
+                    BuffType.PHYSICAL_CRITICAL_DAMAGE.value,
+                    BuffType.MAGIC_CRITICAL_DAMAGE.value,
+                    BuffType.CRITICAL_DAMAGE_TAKE.value,
+                    BuffType.DAMAGE_TAKE.value,
+                    BuffType.PHYSICAL_DAMAGE_TAKE.value,
+                    BuffType.MAGIC_DAMAGE_TAKE.value,
+                    BuffType.PHYSICAL_DAMAGE.value,
+                    BuffType.MAGIC_DAMAGE.value,
+                }
+                else ""
+            )
         elif self.action.action_type == SkillActionType.DAMAGE_REDUCE.value:
             return "%"
         elif self.action.action_type == SkillActionType.ACTION_DOT.value:

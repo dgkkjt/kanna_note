@@ -344,8 +344,7 @@ class StringResources(Enum):
     SKILL_STATUS_1400 = "变身状态"
     SKILL_STATUS_1600 = "恐慌状态"
     SKILL_STATUS_1601 = "隐匿状态"
-    SKILL_STATUS_1700_21 = "物理防御减少状态"
-    SKILL_STATUS_1700_41 = "魔法防御减少状态"
+    SKILL_STATUS_1700 = "{}状态"
     SKILL_STATUS_721 = "特殊标记状态"
     SKILL_STATUS_6107 = "龙之眼状态"
     SKILL_STATUS_1800 = "多目标状态"
@@ -357,6 +356,8 @@ class StringResources(Enum):
     SKILL_STATUS_6160 = "黏着状态"
     SKILL_STATUS_PHYSICAL_ATK = "物理攻击"
     SKILL_STATUS_MAGIC_ATK = "魔法攻击"
+    SKILL_AREA_EXCLUDE_SUMMON = "召唤物、分身除外"
+    SKILL_AREA_INCLUDE_SUMMON = "飞行单位在内"
     SKILL_TARGET_NONE = "目标"
     SKILL_TARGET_2_8 = "随机"
     SKILL_TARGET_3 = "最近"
@@ -414,10 +415,12 @@ class StringResources(Enum):
     SKILL_HP_MAX = "HP最大值"
     SKILL_INCREASE = "提升"
     SKILL_REDUCE = "减少"
-    SKILL_FIXED = "(固定数值，无法被其他技能效果改变)"
+    SKILL_FIXED = "(固定数值)"
+    SKILL_CANNOT_DISPEL = "(不可驱散)"
     SKILL_PHYSICAL_CRITICAL_DAMAGE = "物理暴击伤害"
     SKILL_MAGIC_CRITICAL_DAMAGE = "魔法暴击伤害"
     SKILL_CRITICAL_DAMAGE_TAKE = "受到的暴击伤害"
+    SKILL_DAMAGE_TAKE = "受到的伤害"
     SKILL_PHYSICAL_DAMAGE_TAKE = "受到的物理伤害"
     SKILL_MAGIC_DAMAGE_TAKE = "受到的魔法伤害"
     SKILL_PHYSICAL_DAMAGE = "造成的物理伤害"
@@ -484,6 +487,7 @@ class StringResources(Enum):
     SKILL_ACTION_SUMMON_TARGET = "在{}{}"
     SKILL_ACTION_SUMMON_UNIT = "，召唤友方单位"
     SKILL_ACTION_TP_RECOVERY = "TP回复"
+    SKILL_ACTION_TP_RECOVERY_FIX = "TP回复（固定）"
     SKILL_ACTION_TP_REDUCE = "TP减少"
     SKILL_ACTION_CONDITION = "条件：{}"
     SKILL_ACTION_TYPE_DESC_17_2 = "受到伤害时 [{}%] 概率"
@@ -648,7 +652,7 @@ class StringResources(Enum):
     SKILL_ACTION_TYPE_DESC_106_TYPE_COMMON = "守护"
     SKILL_ACTION_TYPE_DESC_106_TYPE_141 = "堕天使的守护"
     SKILL_ACTION_TYPE_DESC_107 = "动作({})暴击率依据物理暴击与魔法暴击之和"
-    SKILL_ACTION_TYPE_DESC_110 = "使{}受到持续伤害时，额外承受 {} 的伤害{}"
+    SKILL_ACTION_TYPE_DESC_110 = "使{}受到持续伤害{}时，伤害提升 [{}] 倍{}"
     SKILL_ACTION_TYPE_DESC_111 = "当{}{}时，使用动作({})"
     SKILL_ACTION_TYPE_DESC_111_1 = "当{}标记数量 {} [{}] 时，使用动作({})"
     SKILL_ACTION_TYPE_DESC_111_2 = "受到暴击伤害"
@@ -682,6 +686,7 @@ class StringResources(Enum):
     SKILL_DOT_3_8 = "诅咒"
     SKILL_DOT_4 = "猛毒"
     SKILL_DOT_5 = "咒术"
+    SKILL_DOT_9 = "黑炎"
     SKILL_DOT_11 = "绝怠灵度"
     ATTR_HP = "HP"
     ATTR_LIFE_STEAL = "HP吸收"
@@ -766,3 +771,79 @@ class CalendarEventType(Enum):
     @classmethod
     def get_by_value(cls, value: int) -> "CalendarEventType":
         return next((item for item in cls if item.value == value), cls.UNKNOWN)
+
+
+class DotType(Enum):
+    DOT_0 = "skill_dot_0"
+    DOT_1 = "skill_dot_1_7"
+    DOT_2 = "skill_dot_2"
+    DOT_3 = "skill_dot_3_8"
+    DOT_4 = "skill_dot_4"
+    DOT_5 = "skill_dot_5"
+    DOT_7 = "skill_dot_1_7"
+    DOT_8 = "skill_dot_3_8"
+    DOT_9 = "skill_dot_9"
+    DOT_11 = "skill_dot_11"
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def get(cls, key: int) -> "DotType":
+        return next((item for item in cls if item.name == f"DOT_{key}"), cls.UNKNOWN)
+
+
+buff_type_name_duct = {
+    -1: StringResources.UNKNOWN.value,
+    1: StringResources.ATTR_ATK.value,
+    2: StringResources.ATTR_DEF.value,
+    3: StringResources.ATTR_MAGIC_STR.value,
+    4: StringResources.ATTR_MAGIC_DEF.value,
+    5: StringResources.ATTR_DODGE.value,
+    6: StringResources.ATTR_PHYSICAL_CRITICAL.value,
+    7: StringResources.ATTR_MAGIC_CRITICAL.value,
+    8: StringResources.ATTR_ENERGY_RECOVERY_RATE.value,
+    9: StringResources.ATTR_LIFE_STEAL.value,
+    10: StringResources.SKILL_SPEED.value,
+    11: StringResources.SKILL_PHYSICAL_CRITICAL_DAMAGE.value,
+    12: StringResources.SKILL_MAGIC_CRITICAL_DAMAGE.value,
+    13: StringResources.ATTR_ACCURACY.value,
+    14: StringResources.SKILL_CRITICAL_DAMAGE_TAKE.value,
+    15: StringResources.SKILL_DAMAGE_TAKE.value,
+    16: StringResources.SKILL_PHYSICAL_DAMAGE_TAKE.value,
+    17: StringResources.SKILL_MAGIC_DAMAGE_TAKE.value,
+    18: StringResources.SKILL_PHYSICAL_DAMAGE.value,
+    19: StringResources.SKILL_MAGIC_DAMAGE.value,
+    100: StringResources.SKILL_HP_MAX.value,
+}
+
+
+class BuffType(Enum):
+
+    UNKNOWN = -1
+    ATK = 1
+    DEF = 2
+    MAGIC_STR = 3
+    MAGIC_DEF = 4
+    DODGE = 5
+    PHYSICAL_CRITICAL = 6
+    MAGIC_CRITICAL = 7
+    ENERGY_RECOVERY_RATE = 8
+    LIFE_STEAL = 9
+    SPEED = 10
+    PHYSICAL_CRITICAL_DAMAGE = 11
+    MAGIC_CRITICAL_DAMAGE = 12
+    ACCURACY = 13
+    CRITICAL_DAMAGE_TAKE = 14
+    DAMAGE_TAKE = 15
+    PHYSICAL_DAMAGE_TAKE = 16
+    MAGIC_DAMAGE_TAKE = 17
+    PHYSICAL_DAMAGE = 18
+    MAGIC_DAMAGE = 19
+    MAX_HP = 100
+
+    @classmethod
+    def get(cls, key: int) -> "BuffType":
+        return next((item for item in cls if item.value == key), cls.UNKNOWN)
+
+    @property
+    def name(self) -> str:
+        return buff_type_name_duct.get(self.value, StringResources.UNKNOWN.value)
