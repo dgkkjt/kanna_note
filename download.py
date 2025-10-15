@@ -7,17 +7,23 @@ import httpx
 
 
 async def update_pcr_database():
-    for url, path in zip(
+    try:
+        for url, path in zip(
         (FetchUrl.jp_url.value, FetchUrl.tw_url.value, FetchUrl.cn_url.value),
         (FilePath.jp_db.value, FilePath.tw_db.value, FilePath.cn_db.value),
     ):
-        decompressor = brotli.Decompressor()
-        with open(FilePath.temp_db.value, "wb") as f:
-            async for chunk in download_stream(url):
-                f.write(decompressor.process(chunk))
+            decompressor = brotli.Decompressor()
+            with open(FilePath.temp_db.value, "wb") as f:
+                async for chunk in download_stream(url):
+                    f.write(decompressor.process(chunk))
 
-        os.replace(FilePath.temp_db.value, path)  # 替换文件
-    os.remove(FilePath.temp_db.value)  # 删除临时文件
+            os.replace(FilePath.temp_db.value, path)  # 替换文件
+    finally:
+             if os.path.exists(FilePath.temp_db.value):
+                try:          
+                    os.remove(FilePath.temp_db.value)  # 删除临时文件
+                except OSError as e:
+                    print(f"清理临时文件失败: {e}")    
 
 
 def generate_pcr_fullcard(id_, star):
