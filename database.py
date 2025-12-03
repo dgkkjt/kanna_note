@@ -1,3 +1,4 @@
+from ast import List
 import datetime
 from functools import wraps
 from typing_extensions import Concatenate, ParamSpec
@@ -26,6 +27,7 @@ from .table import (
     DailyMissionData,
     EnemyMParts,
     EnemyParameter,
+    EnemyTalentWeakness,
     EventEnemyParameter,
     EventStoryData,
     EventStoryDetail,
@@ -44,6 +46,7 @@ from .table import (
     SpSkillLabelData,
     SreEnemyParameter,
     TalentQuestEnemyParameter,
+    TalentWeakness,
     TdfSchedule,
     TowerEnemyParameter,
     TowerSchedule,
@@ -55,6 +58,7 @@ from .table import (
     ActualUnitBackground,
     UnitSkillData,
     UnitSkillDataRF,
+    UnitTalent,
     UnitUniqueEquipment,
     UnitUniqueEquip,
     UniqueEquipEnhanceRate,
@@ -217,6 +221,8 @@ class PCRDatabase:
                 birth_day_int,
                 UnitData.search_area_width,
                 UnitData.atk_type,
+                UnitData.normal_atk_cast_time,
+                UnitTalent.talent_id,
                 coalesce(UnitData.comment, "......").label("intro"),
                 coalesce(UnitData.start_time, text("'2015/04/01'")).label(
                     "unit_start_time"
@@ -231,6 +237,10 @@ class PCRDatabase:
                 ((UnitData.unit_id // 100) == (ActualUnitBackground.unit_id // 100)),
                 isouter=True,
             )
+            .join(
+                UnitTalent, 
+                UnitTalent.unit_id == UnitProfile.unit_id)
+            
             .where(UnitData.unit_id == unit_id)
         )
         result = await session.execute(query)
@@ -249,6 +259,15 @@ class PCRDatabase:
     ) -> UnitEnemyData:
         result = await session.execute(
             select(UnitEnemyData).where(UnitEnemyData.unit_id == enemy_id)
+        )
+        return result.scalars().first()
+    
+    @session
+    async def get_enemy_weakness_query(
+        self, session: AsyncSession, enemy_id: int
+    ) -> Optional[TalentWeakness]:
+        result = await session.execute(
+            select(TalentWeakness).join(EnemyTalentWeakness, TalentWeakness.resist_id == EnemyTalentWeakness.resist_id).where(EnemyTalentWeakness.enemy_id == enemy_id)
         )
         return result.scalars().first()
 
