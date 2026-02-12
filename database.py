@@ -23,7 +23,7 @@ from .table import (
     CharaFortuneSchedule,
     ClanBattle2MapData,
     ClanBattleSchedule,
-    ColosseumScheduleData,
+    DomeScheduleData,
     DailyMissionData,
     EnemyMParts,
     EnemyParameter,
@@ -1270,10 +1270,10 @@ class PCRDatabase:
             select(
                 literal(-3).label("type"),
                 literal(0).label("value"),
-                ColosseumScheduleData.start_time,
-                ColosseumScheduleData.end_time,
+                DomeScheduleData.start_time,
+                DomeScheduleData.end_time,
             )
-            .order_by(ColosseumScheduleData.schedule_id.desc())
+            .order_by(DomeScheduleData.schedule_id.desc())
             .limit(limit)
         )
 

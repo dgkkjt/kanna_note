@@ -643,16 +643,14 @@ class CharaFortuneSchedule(PCRModel, table=True):
     end_time: str
 
 
-class ColosseumScheduleData(PCRModel, table=True):
-    __tablename__ = "colosseum_schedule_data"
+class DomeScheduleData(PCRModel, table=True):
+    __tablename__ = "dome_schedule_data"
 
     schedule_id: int = Field(primary_key=True)
     start_time: str
     count_start_time: str
     end_time: str
     close_time: str
-    calc_start: str
-    result_start: str
 
 
 class HatsuneSchedule(PCRModel, table=True):
