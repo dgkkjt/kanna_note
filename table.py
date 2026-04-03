@@ -333,6 +333,16 @@ class SkillData(PCRModel, table=True):
     action_8: Optional[int] = None
     action_9: Optional[int] = None
     action_10: Optional[int] = None
+    action_11: Optional[int] = None
+    action_12: Optional[int] = None
+    action_13: Optional[int] = None
+    action_14: Optional[int] = None
+    action_15: Optional[int] = None
+    action_16: Optional[int] = None
+    action_17: Optional[int] = None
+    action_18: Optional[int] = None
+    action_19: Optional[int] = None
+    action_20: Optional[int] = None
 
     # 依赖技能动作
     depend_action_1: Optional[int] = None
@@ -345,6 +355,16 @@ class SkillData(PCRModel, table=True):
     depend_action_8: Optional[int] = None
     depend_action_9: Optional[int] = None
     depend_action_10: Optional[int] = None
+    depend_action_11: Optional[int] = None
+    depend_action_12: Optional[int] = None
+    depend_action_13: Optional[int] = None
+    depend_action_14: Optional[int] = None
+    depend_action_15: Optional[int] = None
+    depend_action_16: Optional[int] = None
+    depend_action_17: Optional[int] = None
+    depend_action_18: Optional[int] = None
+    depend_action_19: Optional[int] = None
+    depend_action_20: Optional[int] = None
 
     # 额外字段
     description: Optional[str] = None
@@ -1237,3 +1257,32 @@ class ExUniqueEquipment1(PCRModel, table=True):
     unknown_1: int
     magic_defense: int
     energy_reduce_rate: int
+
+
+class SevenSchedule(PCRModel, table=True):
+    __tablename__ = "seven_schedule"
+    event_id: int = Field(primary_key=True)
+    teaser_time: str
+    start_time: str
+    end_time: str
+    page_title_cv_info: str
+    page_title_cv_2_info: str
+
+
+class SevenEventSetting(PCRModel, table=True):
+    __tablename__ = "seven_event_setting"
+    event_id: int = Field(primary_key=True)
+    title: str
+    sub_title: str
+    introduction: str
+    introduction_2: str
+    introduction_3: str
+    introduction_4: str
+    introduction_5: str
+    introduction_6: str
+    introduction_7: str
+    introduction_8: str
+    introduction_9: str
+    introduction_10: str
+    boss_enemy_id: int
+    boss_unit_id: int
