@@ -13,7 +13,7 @@ from typing import (
     overload,
 )
 
-from sqlalchemy.future import select
+from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from .base import FilePath
 from .table import (
@@ -62,6 +62,7 @@ from .table import (
     UnitEnemyData,
     UnitProfile,
     ActualUnitBackground,
+    UnitRoleData,
     UnitSkillData,
     UnitSkillDataRF,
     UnitTalent,
@@ -270,6 +271,7 @@ class PCRDatabase:
                 UnitData.atk_type,
                 UnitData.normal_atk_cast_time,
                 UnitTalent.talent_id,
+                UnitRoleData.unit_role_id,
                 coalesce(UnitData.comment, "......").label("intro"),
                 coalesce(UnitData.start_time, text("'2015/04/01'")).label(
                     "unit_start_time"
@@ -285,6 +287,7 @@ class PCRDatabase:
                 isouter=True,
             )
             .join(UnitTalent, UnitTalent.unit_id == UnitProfile.unit_id)
+            .join(UnitRoleData, UnitRoleData.unit_id == UnitProfile.unit_id)
             .where(UnitData.unit_id == unit_id)
         )
         result = await session.execute(query)
