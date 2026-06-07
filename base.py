@@ -9,6 +9,7 @@ class FilePath(Enum):
     cn_db = data / "pcr_cn.db"
     tw_db = data / "pcr_tw.db"
     jp_db = data / "pcr_jp.db"
+    jp_supplement_db = data / "pcr_jp_supplement.db"
     temp_db = data / "temp.db"
 
     img = base / "img"
@@ -28,6 +29,7 @@ class FilePath(Enum):
 
 class FetchUrl(Enum):
     jp_url = "https://wthee.xyz/db/redive_jp.db.br"
+    jp_supplement_url = "https://roboninon.win/db/download?compressed=true"
     tw_url = "https://wthee.xyz/db/redive_tw.db.br"
     cn_url = "https://wthee.xyz/db/redive_cn.db.br"
     fullcard_url = "https://redive.estertion.win/card/full/"
@@ -260,8 +262,8 @@ class SkillActionType(Enum):
     BUFF_DOT = 128  # 持续伤害易伤
     DAMAGE_TO_DOT = 129  # 伤害转持续伤害
     CHANGE_DEF_MAX = 130  # 改变防御力上限
-    DAMAGE_CHANGE = 131  # 伤害变更
-    SEAL_CONSUME = 132  # 标记消耗
+    DAMAGE_CHANGE = 132  # 伤害变更
+    SEAL_CONSUME = 133  # 标记消耗
 
 
 class StringResources(Enum):
