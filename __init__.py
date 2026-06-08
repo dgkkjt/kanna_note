@@ -35,6 +35,7 @@ from .handle import (
     update_group_schedule,
 )
 from itertools import product
+from ..multicq_send import group_send
 
 help_ = """
 [@bot简介环奈] 角色简介
@@ -383,9 +384,9 @@ async def check_expiring_events():
                 lines.extend(server_cache[server])
             if not lines:
                 continue
-            await bot.send_group_msg(
-                group_id=int(group_id),
-                message="以下活动将在1小时内结束：\n" + "\n".join(lines),
+            await group_send(
+                group=int(group_id),
+                msg="以下活动将在1小时内结束：\n" + "\n".join(lines),
             )
             logger.info(f"群{group_id}活动结束提醒已发送")
         except Exception:
