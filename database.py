@@ -2,9 +2,9 @@ import asyncio
 import contextlib
 import datetime
 import sqlite3
-from functools import wraps
 from typing_extensions import Concatenate, ParamSpec
 import traceback
+from functools import wraps
 from pathlib import Path
 from typing import (
     Any,
@@ -22,27 +22,60 @@ from typing import (
 )
 
 from loguru import logger
+from sqlalchemy import (
+    Integer,
+    alias,
+    case,
+    cast,
+    func,
+    literal,
+    or_,
+    text,
+    tuple_,
+    union_all,
+)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.sql.functions import coalesce
 from sqlmodel import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+
 from .base import FilePath
+from .model import (
+    BirthdayData,
+    CalendarEvent,
+    CampaignFreegachaData,
+    CharaStoryStatusData,
+    ClanBattleData,
+    ClanBattleTargetData,
+    EventData,
+    GachaHistoryData,
+    SkillActionData,
+    UniqueEquipBonus,
+    UniqueEquipInfo,
+    UnitInfo,
+)
 from .table import (
-    AilmentData,
     AbyssEnemyParameter,
+    AbyssSchedule,
     AcnEnemyParameter,
+    ActualUnitBackground,
+    AilmentData,
     CampaignFreegacha,
     CampaignSchedule,
     CharaFortuneSchedule,
+    CharaIdentity,
+    CharaStoryStatus,
     ClanBattle2MapData,
     ClanBattleSchedule,
     ColosseumScheduleData,
-    DomeScheduleData,
     DailyMissionData,
+    DomeScheduleData,
     EnemyMParts,
     EnemyParameter,
     EnemyTalentWeakness,
     EventEnemyParameter,
     EventStoryData,
     EventStoryDetail,
+    ExUniqueEquipment1,
     GachaData,
     GachaExchangeLineup,
     HatsuneSchedule,
@@ -66,57 +99,25 @@ from .table import (
     SkillData,
     SpSkillLabelData,
     SreEnemyParameter,
+    StoryDetail,
     TalentQuestEnemyParameter,
     TalentWeakness,
     TdfSchedule,
     TowerEnemyParameter,
     TowerSchedule,
-    AbyssSchedule,
-    ExUniqueEquipment1,
+    UniqueEquipEnhanceRate,
+    UniqueEquipmentData,
     UniqueEquipmentEnhanceData,
     UnitAttackPattern,
     UnitData,
     UnitEnemyData,
     UnitProfile,
-    ActualUnitBackground,
     UnitRoleData,
     UnitSkillData,
     UnitSkillDataRF,
     UnitTalent,
     UnitUniqueEquipment,
-    UniqueEquipEnhanceRate,
-    UniqueEquipmentData,
-    StoryDetail,
-    CharaStoryStatus,
-    CharaIdentity,
     WaveGroupData,
-)
-from sqlalchemy import (
-    case,
-    cast,
-    Integer,
-    func,
-    literal,
-    text,
-    or_,
-    tuple_,
-    union_all,
-    alias,
-)
-from sqlalchemy.sql.functions import coalesce
-from .model import (
-    BirthdayData,
-    CalendarEvent,
-    CampaignFreegachaData,
-    CharaStoryStatusData,
-    ClanBattleData,
-    ClanBattleTargetData,
-    EventData,
-    GachaHistoryData,
-    SkillActionData,
-    UniqueEquipBonus,
-    UniqueEquipInfo,
-    UnitInfo,
 )
 
 T = TypeVar("T")
@@ -134,9 +135,8 @@ def session(
 ) -> Callable[Concatenate[Any, P], Awaitable[T]]:
     @wraps(func)
     async def wrapper(self, *args, **kwargs):
-        async with self.async_session() as _session:
-            async with _session.begin():
-                return await func(self, _session, *args, **kwargs)
+        async with self.async_session() as _session, _session.begin():
+            return await func(self, _session, *args, **kwargs)
 
     return wrapper  # 返回包装后的函数
 
@@ -182,7 +182,7 @@ ENEMY_PARAMETER_QUERY_SPECS = (
 
 class PCRDatabase:
     def __init__(self, url: str):
-        self.db_path = str(url)
+        self.db_path = url
         self.url = f"sqlite+aiosqlite:///{url}"
         self.engine = create_async_engine(self.url, pool_recycle=1500)
         self.async_session = async_sessionmaker(
@@ -287,7 +287,7 @@ class PCRDatabase:
         # 构建查询
         query = (
             select(
-                UnitProfile.unit_id,
+                UnitData.unit_id,
                 UnitData.unit_name,
                 coalesce(UnitData.kana, "").label("kana"),
                 UnitData.rarity,
@@ -306,8 +306,8 @@ class PCRDatabase:
                 UnitData.search_area_width,
                 UnitData.atk_type,
                 UnitData.normal_atk_cast_time,
-                UnitTalent.talent_id,
-                UnitRoleData.unit_role_id,
+                coalesce(UnitTalent.talent_id, 0).label("talent_id"),
+                coalesce(UnitRoleData.unit_role_id, 0).label("unit_role_id"),
                 coalesce(UnitData.comment, "......").label("intro"),
                 coalesce(UnitData.start_time, text("'2015/04/01'")).label(
                     "unit_start_time"
@@ -316,20 +316,23 @@ class PCRDatabase:
                 UnitData.cutin1_star6,
                 limit_type_case,
             )
-            .join(UnitData, UnitData.unit_id == UnitProfile.unit_id, isouter=True)
+            .select_from(UnitData)
+            .join(UnitProfile, UnitProfile.unit_id == UnitData.unit_id, isouter=True)
             .join(
                 ActualUnitBackground,
                 ((UnitData.unit_id // 100) == (ActualUnitBackground.unit_id // 100)),
                 isouter=True,
             )
-            .join(UnitTalent, UnitTalent.unit_id == UnitProfile.unit_id)
-            .join(UnitRoleData, UnitRoleData.unit_id == UnitProfile.unit_id)
+            .join(UnitTalent, UnitTalent.unit_id == UnitData.unit_id, isouter=True)
+            .join(UnitRoleData, UnitRoleData.unit_id == UnitData.unit_id, isouter=True)
             .where(UnitData.unit_id == unit_id)
         )
         result = await session.execute(query)
-        unit_info = UnitInfo(
-            **dict(zip(UnitInfo.__annotations__.keys(), result.first()))
-        )
+        row = result.first()
+        if row is None:
+            logger.warning(f"unit_data does not contain unit_id={unit_id}")
+            return UnitInfo(unit_id=unit_id)
+        unit_info = UnitInfo(**dict(zip(UnitInfo.__annotations__.keys(), row)))
         if unit_info.unit_id in KANNA_IDS:
             unit_info.limit_type = 2
         elif unit_info.unit_id in self.ex_character:
@@ -1646,9 +1649,7 @@ class PCRDatabase:
                 ).fetchone()[0]
                 conn.execute(f'DROP TABLE IF EXISTS main."{table}"')
                 conn.execute(create_sql)
-                conn.execute(
-                    f'INSERT INTO main."{table}" SELECT * FROM sup."{table}"'
-                )
+                conn.execute(f'INSERT INTO main."{table}" SELECT * FROM sup."{table}"')
                 merged.append((table, jp_count, sup_count))
                 logger.info(f"合并表 {table}: {jp_count} -> {sup_count}")
 
